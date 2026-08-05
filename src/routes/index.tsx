@@ -33,12 +33,15 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "recover">("login");
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const checkAdmin = useServerFn(adminExists);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
     });
-  }, [navigate]);
+    checkAdmin().then((r) => setNeedsSetup(!r.exists));
+  }, [navigate, checkAdmin]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
