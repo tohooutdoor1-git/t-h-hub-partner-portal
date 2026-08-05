@@ -149,11 +149,14 @@ export const adminUpdateDistributor = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: Record<string, unknown> = {};
-    if (data.level_code) patch.level_code = data.level_code;
-    if (data.seller_id !== undefined) patch.seller_id = data.seller_id;
-    if (data.active !== undefined) patch.active = data.active;
+    if (data.level_code) patch["level_code"] = data.level_code;
+    if (data.seller_id !== undefined) patch["seller_id"] = data.seller_id;
+    if (data.active !== undefined) patch["active"] = data.active;
     if (Object.keys(patch).length) {
-      const { error } = await supabaseAdmin.from("distributors").update(patch).eq("id", data.id);
+      const { error } = await supabaseAdmin
+        .from("distributors")
+        .update(patch as never)
+        .eq("id", data.id);
       if (error) throw new Error(error.message);
     }
     if (data.password) {
