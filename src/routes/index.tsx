@@ -154,6 +154,8 @@ function LoginPage() {
             El acceso a TÖHÖ HUB es exclusivo para distribuidores autorizados. Las cuentas se crean
             únicamente desde el panel administrativo de TÖHÖ.
           </p>
+
+          {needsSetup && <FirstAdminForm onDone={() => setNeedsSetup(false)} />}
         </div>
       </div>
     </div>
