@@ -229,3 +229,43 @@ export const adminSaveLevel = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { count } = await supabaseAdmin
+    .from("user_roles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin");
+  return { exists: (count ?? 0) > 0 };
+});
+
+export const createFirstAdmin = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        full_name: z.string().min(2),
+        email: z.string().email(),
+        password: z.string().min(8),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count } = await supabaseAdmin
+      .from("user_roles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "admin");
+    if ((count ?? 0) > 0) throw new Error("TÖHÖ HUB ya está configurado.");
+    const created = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name },
+    });
+    if (created.error) throw new Error(created.error.message);
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: created.data.user!.id, role: "admin" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
