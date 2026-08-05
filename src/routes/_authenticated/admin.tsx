@@ -107,9 +107,9 @@ function AdminPage() {
     );
   }
 
-  const distributors = (data?.distributors ?? []) as Array<Record<string, never>>;
-  const sellers = (data?.sellers ?? []) as Array<Record<string, never>>;
-  const levels = (data?.levels ?? []) as Array<Record<string, never>>;
+  const distributors = (data?.distributors ?? []) as unknown as Array<Record<string, unknown>>;
+  const sellers = (data?.sellers ?? []) as unknown as Array<Record<string, unknown>>;
+  const levels = (data?.levels ?? []) as unknown as Array<Record<string, unknown>>;
 
   return (
     <HubShell
