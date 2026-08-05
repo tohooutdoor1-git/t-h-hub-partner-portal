@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HubLogo } from "@/components/hub/HubShell";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { adminExists, createFirstAdmin } from "@/lib/hub.functions";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -162,5 +164,47 @@ function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FirstAdminForm({ onDone }: { onDone: () => void }) {
+  const create = useServerFn(createFirstAdmin);
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <form
+      className="mt-6 space-y-3 rounded-2xl border border-dashed border-primary/40 bg-primary-soft/60 p-5"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        setLoading(true);
+        try {
+          await create({
+            data: {
+              full_name: String(f.get("full_name")),
+              email: String(f.get("email")),
+              password: String(f.get("password")),
+            },
+          });
+          toast.success("Cuenta TÖHÖ creada. Ya puedes iniciar sesión.");
+          onDone();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "No se pudo crear la cuenta");
+        } finally {
+          setLoading(false);
+        }
+      }}
+    >
+      <p className="hub-eyebrow">Configuración inicial</p>
+      <p className="text-xs text-muted-foreground">
+        Aún no existe una cuenta administradora. Crea la primera cuenta del equipo TÖHÖ.
+      </p>
+      <Input name="full_name" placeholder="Nombre" required />
+      <Input name="email" type="email" placeholder="admin@toho.com.mx" required />
+      <Input name="password" type="password" placeholder="Contraseña (mín. 8)" required minLength={8} />
+      <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
+        Crear cuenta administradora
+      </Button>
+    </form>
   );
 }
