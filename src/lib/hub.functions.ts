@@ -193,9 +193,16 @@ export const adminSaveSeller = createServerFn({ method: "POST" })
     const { assertAdmin } = await import("@/lib/hub.server");
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const row = {
+      name: data.name,
+      email: data.email ?? null,
+      phone: data.phone ?? null,
+      whatsapp: data.whatsapp ?? null,
+      active: data.active,
+    };
     const { error } = data.id
-      ? await supabaseAdmin.from("sellers").update(data).eq("id", data.id)
-      : await supabaseAdmin.from("sellers").insert(data);
+      ? await supabaseAdmin.from("sellers").update(row).eq("id", data.id)
+      : await supabaseAdmin.from("sellers").insert(row);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
