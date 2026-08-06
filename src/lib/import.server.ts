@@ -183,9 +183,9 @@ export async function runImport(
     if (active !== undefined) payload["active"] = active;
 
     try {
-      if (brandName) payload["brand_id"] = await resolveRef(db, "brands", brandName, cache);
-      if (categoryName) payload["category_id"] = await resolveRef(db, "categories", categoryName, cache);
-      if (subcategoryName)
+      if (brandName && !dryRun) payload["brand_id"] = await resolveRef(db, "brands", brandName, cache);
+      if (categoryName && !dryRun) payload["category_id"] = await resolveRef(db, "categories", categoryName, cache);
+      if (subcategoryName && !dryRun)
         payload["subcategory_id"] = await resolveRef(db, "categories", subcategoryName, cache);
     } catch (e) {
       issues.push({ row: line, sku, message: (e as Error).message });
@@ -194,7 +194,8 @@ export async function runImport(
     }
 
     if (dryRun) {
-      existing ? updated++ : created++;
+      if (existing) updated++;
+      else created++;
       continue;
     }
 
