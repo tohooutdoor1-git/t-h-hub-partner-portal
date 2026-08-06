@@ -44,9 +44,88 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      banners: {
+        Row: {
+          active: boolean
+          brand_id: string | null
+          button_label: string | null
+          category_id: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          link_url: string | null
+          sort_order: number
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand_id?: string | null
+          button_label?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand_id?: string | null
+          button_label?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banners_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banners_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           active: boolean
+          banner_url: string | null
           created_at: string
           description: string | null
           featured: boolean
@@ -58,6 +137,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          banner_url?: string | null
           created_at?: string
           description?: string | null
           featured?: boolean
@@ -69,6 +149,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          banner_url?: string | null
           created_at?: string
           description?: string | null
           featured?: boolean
@@ -159,35 +240,56 @@ export type Database = {
       categories: {
         Row: {
           active: boolean
+          brand_id: string | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           name: string
+          parent_id: string | null
           slug: string
           sort_order: number
         }
         Insert: {
           active?: boolean
+          brand_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           name: string
+          parent_id?: string | null
           slug: string
           sort_order?: number
         }
         Update: {
           active?: boolean
+          brand_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          parent_id?: string | null
           slug?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       distributors: {
         Row: {
@@ -516,11 +618,13 @@ export type Database = {
           list_price: number
           main_image: string | null
           name: string
+          short_description: string | null
           sku: string
           sort_order: number
           specs: Json
           stock: number
           stock_status: Database["public"]["Enums"]["stock_status"]
+          subcategory_id: string | null
           times_quoted: number
           updated_at: string
           video_url: string | null
@@ -539,11 +643,13 @@ export type Database = {
           list_price?: number
           main_image?: string | null
           name: string
+          short_description?: string | null
           sku: string
           sort_order?: number
           specs?: Json
           stock?: number
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          subcategory_id?: string | null
           times_quoted?: number
           updated_at?: string
           video_url?: string | null
@@ -562,11 +668,13 @@ export type Database = {
           list_price?: number
           main_image?: string | null
           name?: string
+          short_description?: string | null
           sku?: string
           sort_order?: number
           specs?: Json
           stock?: number
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          subcategory_id?: string | null
           times_quoted?: number
           updated_at?: string
           video_url?: string | null
@@ -582,6 +690,13 @@ export type Database = {
           {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
@@ -906,6 +1021,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_order: { Args: { _order_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -917,6 +1033,7 @@ export type Database = {
       my_discount_pct: { Args: never; Returns: number }
       my_distributor_id: { Args: never; Returns: string }
       my_seller_id: { Args: never; Returns: string }
+      next_folio: { Args: { _prefix: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "seller" | "distributor"
