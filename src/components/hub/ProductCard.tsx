@@ -30,9 +30,9 @@ export function ProductImage({
   alt,
   className = "aspect-[4/3]",
 }: {
-  src?: string | null;
+  src?: string | null | undefined;
   alt: string;
-  className?: string;
+  className?: string | undefined;
 }) {
   return (
     <div className={`relative w-full overflow-hidden rounded-xl bg-muted ${className}`}>
