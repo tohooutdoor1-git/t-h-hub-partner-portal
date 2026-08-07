@@ -24,6 +24,12 @@ import {
   adminSaveLevel,
   adminSaveSeller,
 } from "@/lib/hub.functions";
+import { adminListCatalogData } from "@/lib/catalog.functions";
+import { ProductsTab } from "@/components/admin/ProductsTab";
+import { EntitiesTab } from "@/components/admin/EntitiesTab";
+import { InventoryTab } from "@/components/admin/InventoryTab";
+import { StaffQuotesTab } from "@/components/admin/StaffQuotesTab";
+import { ImportTab } from "@/components/admin/ImportTab";
 import { money, shortDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin")({
