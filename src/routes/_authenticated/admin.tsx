@@ -356,7 +356,24 @@ function AdminPage() {
             ))}
           </div>
         </TabsContent>
+
+        <TabsContent value="productos" className="mt-5">
+          <ProductsTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="catalogo" className="mt-5">
+          <EntitiesTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="inventario" className="mt-5">
+          <InventoryTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="solicitudes" className="mt-5">
+          <StaffQuotesTab />
+        </TabsContent>
+        <TabsContent value="importar" className="mt-5">
+          <ImportTab />
+        </TabsContent>
       </Tabs>
+
     </HubShell>
   );
 }
