@@ -24,6 +24,12 @@ import {
   adminSaveLevel,
   adminSaveSeller,
 } from "@/lib/hub.functions";
+import { adminListCatalogData } from "@/lib/catalog.functions";
+import { ProductsTab } from "@/components/admin/ProductsTab";
+import { EntitiesTab } from "@/components/admin/EntitiesTab";
+import { InventoryTab } from "@/components/admin/InventoryTab";
+import { StaffQuotesTab } from "@/components/admin/StaffQuotesTab";
+import { ImportTab } from "@/components/admin/ImportTab";
 import { money, shortDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -58,6 +64,14 @@ function AdminPage() {
     queryFn: () => listFn(),
     enabled: isAdmin,
   });
+
+  const catalogFn = useServerFn(adminListCatalogData);
+  const { data: catalog } = useQuery({
+    queryKey: ["admin-catalog"],
+    queryFn: () => catalogFn(),
+    enabled: isAdmin,
+  });
+
 
   const create = useMutation({
     mutationFn: (payload: Record<string, unknown>) => createFn({ data: payload as never }),
@@ -188,11 +202,17 @@ function AdminPage() {
       }
     >
       <Tabs defaultValue="distribuidores">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="distribuidores">Distribuidores</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="niveles">Niveles</TabsTrigger>
+          <TabsTrigger value="productos">Productos</TabsTrigger>
+          <TabsTrigger value="catalogo">Catálogo</TabsTrigger>
+          <TabsTrigger value="inventario">Inventario</TabsTrigger>
+          <TabsTrigger value="solicitudes">Cotizaciones y pedidos</TabsTrigger>
+          <TabsTrigger value="importar">Importar</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="distribuidores" className="mt-5">
           <div className="hub-card overflow-hidden">
@@ -350,7 +370,24 @@ function AdminPage() {
             ))}
           </div>
         </TabsContent>
+
+        <TabsContent value="productos" className="mt-5">
+          <ProductsTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="catalogo" className="mt-5">
+          <EntitiesTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="inventario" className="mt-5">
+          <InventoryTab data={catalog} />
+        </TabsContent>
+        <TabsContent value="solicitudes" className="mt-5">
+          <StaffQuotesTab />
+        </TabsContent>
+        <TabsContent value="importar" className="mt-5">
+          <ImportTab />
+        </TabsContent>
       </Tabs>
+
     </HubShell>
   );
 }
