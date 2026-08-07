@@ -65,6 +65,14 @@ function AdminPage() {
     enabled: isAdmin,
   });
 
+  const catalogFn = useServerFn(adminListCatalogData);
+  const { data: catalog } = useQuery({
+    queryKey: ["admin-catalog"],
+    queryFn: () => catalogFn(),
+    enabled: isAdmin,
+  });
+
+
   const create = useMutation({
     mutationFn: (payload: Record<string, unknown>) => createFn({ data: payload as never }),
     onSuccess: () => {
