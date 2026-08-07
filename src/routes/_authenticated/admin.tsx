@@ -188,11 +188,17 @@ function AdminPage() {
       }
     >
       <Tabs defaultValue="distribuidores">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="distribuidores">Distribuidores</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="niveles">Niveles</TabsTrigger>
+          <TabsTrigger value="productos">Productos</TabsTrigger>
+          <TabsTrigger value="catalogo">Catálogo</TabsTrigger>
+          <TabsTrigger value="inventario">Inventario</TabsTrigger>
+          <TabsTrigger value="solicitudes">Cotizaciones y pedidos</TabsTrigger>
+          <TabsTrigger value="importar">Importar</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="distribuidores" className="mt-5">
           <div className="hub-card overflow-hidden">
