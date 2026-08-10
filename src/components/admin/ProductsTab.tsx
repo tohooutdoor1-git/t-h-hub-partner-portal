@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Pencil, Power, Trash2, Upload } from "lucide-react";
+import { Copy, Pencil, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/hub/Badges";
 import { stockTone } from "@/components/hub/ProductCard";
-import { supabase } from "@/integrations/supabase/client";
+import { GalleryEditor, VideoEditor, type MediaItem } from "@/components/admin/MediaEditor";
 import { adminGetProduct, adminProductAction, adminSaveProduct } from "@/lib/catalog.functions";
 import { money2 } from "@/lib/format";
 import { STOCK_LABEL } from "@/lib/pricing";
@@ -188,9 +188,30 @@ function ProductForm({
   saving: boolean;
   onSubmit: (payload: Record<string, unknown>) => void;
 }) {
-  const [mainImage, setMainImage] = useState<string>(String(product?.["main_image"] ?? ""));
-  const [preview, setPreview] = useState<string | null>(product?.["main_image_url"] ?? null);
-  const [uploading, setUploading] = useState(false);
+  const initialGallery: MediaItem[] = product
+    ? [
+        ...(product["main_image"]
+          ? [
+              {
+                key: String(product["main_image"]),
+                path: String(product["main_image"]),
+                url: (product["main_image_url"] ?? null) as string | null,
+              },
+            ]
+          : []),
+        ...(((product["images"] ?? []) as Array<Record<string, any>>).map((img) => ({
+          key: String(img["id"] ?? img["url"]),
+          path: String(img["url"]),
+          url: (img["display"] ?? null) as string | null,
+        })) ),
+      ]
+    : [];
+
+  const [gallery, setGallery] = useState<MediaItem[]>(initialGallery);
+  const [videoPath, setVideoPath] = useState<string>(String(product?.["video_url"] ?? ""));
+  const [videoDisplay, setVideoDisplay] = useState<string | null>(
+    (product?.["video_display"] ?? null) as string | null,
+  );
   const [active, setActive] = useState(Boolean(product?.["active"] ?? true));
   const [isNew, setIsNew] = useState(Boolean(product?.["is_new"] ?? false));
   const [featured, setFeatured] = useState(Boolean(product?.["featured"] ?? false));
@@ -198,23 +219,6 @@ function ProductForm({
   const parents = categories.filter((c) => !c["parent_id"]);
   const subs = categories.filter((c) => c["parent_id"]);
 
-  async function upload(file: File) {
-    setUploading(true);
-    const path = `products/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]+/g, "-")}`;
-    const { error } = await supabase.storage.from("product-media").upload(path, file, {
-      upsert: true,
-      contentType: file.type,
-    });
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setMainImage(path);
-      const { data } = await supabase.storage.from("product-media").createSignedUrl(path, 3600);
-      setPreview(data?.signedUrl ?? null);
-      toast.success("Imagen cargada");
-    }
-    setUploading(false);
-  }
 
   return (
     <form
@@ -246,15 +250,15 @@ function ProductForm({
           short_description: f.get("short_description") || null,
           description: f.get("description") || null,
           extra_info: f.get("extra_info") || null,
-          video_url: f.get("video_url") || null,
-          main_image: mainImage || null,
+          video_url: videoPath || null,
+          main_image: gallery[0]?.path ?? null,
           features,
           specs,
           is_new: isNew,
           featured,
           active,
           sort_order: Number(f.get("sort_order") ?? 0),
-          images: [],
+          images: gallery.slice(1).map((g) => ({ url: g.path, alt: null })),
         });
       }}
     >
@@ -297,32 +301,16 @@ function ProductForm({
         </select>
       </div>
       <F name="sort_order" label="Orden" type="number" defaultValue={product?.["sort_order"] ?? 0} />
-      <F name="video_url" label="URL de video" defaultValue={product?.["video_url"]} />
+      <GalleryEditor items={gallery} onChange={setGallery} />
 
-      <div className="space-y-1.5 sm:col-span-2">
-        <Label>Imagen principal</Label>
-        <div className="flex items-center gap-3">
-          {preview && <img src={preview} alt="" className="h-16 w-16 rounded-lg object-cover" />}
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm">
-            <Upload className="h-4 w-4" />
-            {uploading ? "Subiendo…" : "Subir imagen"}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void upload(file);
-              }}
-            />
-          </label>
-          <Input
-            value={mainImage}
-            onChange={(e) => setMainImage(e.target.value)}
-            placeholder="o pega una URL https://…"
-          />
-        </div>
-      </div>
+      <VideoEditor
+        value={videoPath}
+        display={videoDisplay}
+        onChange={(path, display) => {
+          setVideoPath(path);
+          setVideoDisplay(display);
+        }}
+      />
 
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="short_description">Descripción corta</Label>
@@ -354,7 +342,7 @@ function ProductForm({
       </div>
 
       <div className="sm:col-span-2">
-        <Button type="submit" className="w-full" disabled={saving || uploading}>
+        <Button type="submit" className="w-full" disabled={saving}>
           Guardar producto
         </Button>
       </div>

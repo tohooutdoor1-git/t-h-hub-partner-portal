@@ -30,7 +30,7 @@ export const getCatalog = createServerFn({ method: "POST" })
     let query = supabase
       .from("products")
       .select(
-        "id, sku, name, short_description, list_price, stock_status, main_image, is_new, featured, times_quoted, created_at, sort_order, brand:brands(id, name), category:categories(id, name)",
+        "id, sku, name, short_description, list_price, stock_status, main_image, is_new, featured, times_quoted, created_at, sort_order, brand:brands(id, name), category:categories!products_category_id_fkey(id, name)",
       )
       .eq("active", true)
       .limit(300);
@@ -100,7 +100,7 @@ export const getProductDetail = createServerFn({ method: "POST" })
     const { data: product, error } = await supabase
       .from("products")
       .select(
-        "*, brand:brands(id, name, logo_url), category:categories(id, name), subcategory:categories!products_subcategory_id_fkey(id, name), images:product_images(id, url, alt, sort_order)",
+        "*, brand:brands(id, name, logo_url), category:categories!products_category_id_fkey(id, name), subcategory:categories!products_subcategory_id_fkey(id, name), images:product_images(id, url, alt, sort_order)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -110,13 +110,18 @@ export const getProductDetail = createServerFn({ method: "POST" })
     const images = [...((product.images ?? []) as Array<{ url: string; sort_order: number; id: string }>)].sort(
       (a, b) => a.sort_order - b.sort_order,
     );
-    const map = await signMedia(supabase, [product.main_image, ...images.map((i) => i.url)]);
+    const map = await signMedia(supabase, [
+      product.main_image,
+      product.video_url,
+      ...images.map((i) => i.url),
+    ]);
 
     return {
       product: {
         ...product,
         stock: undefined,
         main_image: resolveMedia(product.main_image, map),
+        video_url: resolveMedia(product.video_url, map),
         images: images.map((i) => ({ ...i, url: resolveMedia(i.url, map) })),
       },
     };
@@ -138,7 +143,7 @@ export const adminListCatalogData = createServerFn({ method: "GET" })
       await Promise.all([
         supabaseAdmin
           .from("products")
-          .select("*, brand:brands(id, name), category:categories(id, name)")
+          .select("*, brand:brands(id, name), category:categories!products_category_id_fkey(id, name)")
           .order("updated_at", { ascending: false })
           .limit(1000),
         supabaseAdmin.from("brands").select("*").order("sort_order").order("name"),
@@ -149,6 +154,10 @@ export const adminListCatalogData = createServerFn({ method: "GET" })
         supabaseAdmin.from("catalog_sections").select("*").order("sort_order"),
         supabaseAdmin.from("catalog_items").select("*").order("sort_order"),
       ]);
+
+    if (products.error) throw new Error(products.error.message);
+
+
 
     const map = await signMedia(context.supabase, [
       ...(products.data ?? []).map((p) => p.main_image),
@@ -344,11 +353,16 @@ export const adminGetProduct = createServerFn({ method: "POST" })
     const images = [...((product.images ?? []) as Array<{ url: string; sort_order: number }>)].sort(
       (a, b) => a.sort_order - b.sort_order,
     );
-    const map = await signMedia(context.supabase, [product.main_image, ...images.map((i) => i.url)]);
+    const map = await signMedia(context.supabase, [
+      product.main_image,
+      product.video_url,
+      ...images.map((i) => i.url),
+    ]);
     return {
       product: {
         ...product,
         main_image_url: resolveMedia(product.main_image, map),
+        video_display: resolveMedia(product.video_url, map),
         images: images.map((i) => ({ ...i, display: resolveMedia(i.url, map) })),
       },
     };
