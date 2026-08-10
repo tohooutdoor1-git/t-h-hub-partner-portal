@@ -30,7 +30,7 @@ export const getCatalog = createServerFn({ method: "POST" })
     let query = supabase
       .from("products")
       .select(
-        "id, sku, name, short_description, list_price, stock_status, main_image, is_new, featured, times_quoted, created_at, sort_order, brand:brands(id, name), category:categories(id, name)",
+        "id, sku, name, short_description, list_price, stock_status, main_image, is_new, featured, times_quoted, created_at, sort_order, brand:brands(id, name), category:categories!products_category_id_fkey(id, name)",
       )
       .eq("active", true)
       .limit(300);
@@ -100,7 +100,7 @@ export const getProductDetail = createServerFn({ method: "POST" })
     const { data: product, error } = await supabase
       .from("products")
       .select(
-        "*, brand:brands(id, name, logo_url), category:categories(id, name), subcategory:categories!products_subcategory_id_fkey(id, name), images:product_images(id, url, alt, sort_order)",
+        "*, brand:brands(id, name, logo_url), category:categories!products_category_id_fkey(id, name), subcategory:categories!products_subcategory_id_fkey(id, name), images:product_images(id, url, alt, sort_order)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -138,7 +138,7 @@ export const adminListCatalogData = createServerFn({ method: "GET" })
       await Promise.all([
         supabaseAdmin
           .from("products")
-          .select("*, brand:brands(id, name), category:categories(id, name)")
+          .select("*, brand:brands(id, name), category:categories!products_category_id_fkey(id, name)")
           .order("updated_at", { ascending: false })
           .limit(1000),
         supabaseAdmin.from("brands").select("*").order("sort_order").order("name"),
