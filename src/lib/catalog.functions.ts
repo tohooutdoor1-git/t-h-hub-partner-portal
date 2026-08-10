@@ -353,11 +353,16 @@ export const adminGetProduct = createServerFn({ method: "POST" })
     const images = [...((product.images ?? []) as Array<{ url: string; sort_order: number }>)].sort(
       (a, b) => a.sort_order - b.sort_order,
     );
-    const map = await signMedia(context.supabase, [product.main_image, ...images.map((i) => i.url)]);
+    const map = await signMedia(context.supabase, [
+      product.main_image,
+      product.video_url,
+      ...images.map((i) => i.url),
+    ]);
     return {
       product: {
         ...product,
         main_image_url: resolveMedia(product.main_image, map),
+        video_display: resolveMedia(product.video_url, map),
         images: images.map((i) => ({ ...i, display: resolveMedia(i.url, map) })),
       },
     };
