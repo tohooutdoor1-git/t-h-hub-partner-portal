@@ -188,9 +188,30 @@ function ProductForm({
   saving: boolean;
   onSubmit: (payload: Record<string, unknown>) => void;
 }) {
-  const [mainImage, setMainImage] = useState<string>(String(product?.["main_image"] ?? ""));
-  const [preview, setPreview] = useState<string | null>(product?.["main_image_url"] ?? null);
-  const [uploading, setUploading] = useState(false);
+  const initialGallery: MediaItem[] = product
+    ? [
+        ...(product["main_image"]
+          ? [
+              {
+                key: String(product["main_image"]),
+                path: String(product["main_image"]),
+                url: (product["main_image_url"] ?? null) as string | null,
+              },
+            ]
+          : []),
+        ...(((product["images"] ?? []) as Array<Record<string, any>>).map((img) => ({
+          key: String(img["id"] ?? img["url"]),
+          path: String(img["url"]),
+          url: (img["display"] ?? null) as string | null,
+        })) ),
+      ]
+    : [];
+
+  const [gallery, setGallery] = useState<MediaItem[]>(initialGallery);
+  const [videoPath, setVideoPath] = useState<string>(String(product?.["video_url"] ?? ""));
+  const [videoDisplay, setVideoDisplay] = useState<string | null>(
+    (product?.["video_display"] ?? null) as string | null,
+  );
   const [active, setActive] = useState(Boolean(product?.["active"] ?? true));
   const [isNew, setIsNew] = useState(Boolean(product?.["is_new"] ?? false));
   const [featured, setFeatured] = useState(Boolean(product?.["featured"] ?? false));
@@ -198,23 +219,6 @@ function ProductForm({
   const parents = categories.filter((c) => !c["parent_id"]);
   const subs = categories.filter((c) => c["parent_id"]);
 
-  async function upload(file: File) {
-    setUploading(true);
-    const path = `products/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]+/g, "-")}`;
-    const { error } = await supabase.storage.from("product-media").upload(path, file, {
-      upsert: true,
-      contentType: file.type,
-    });
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setMainImage(path);
-      const { data } = await supabase.storage.from("product-media").createSignedUrl(path, 3600);
-      setPreview(data?.signedUrl ?? null);
-      toast.success("Imagen cargada");
-    }
-    setUploading(false);
-  }
 
   return (
     <form
