@@ -150,6 +150,10 @@ export const adminListCatalogData = createServerFn({ method: "GET" })
         supabaseAdmin.from("catalog_items").select("*").order("sort_order"),
       ]);
 
+    if (products.error) throw new Error(products.error.message);
+
+
+
     const map = await signMedia(context.supabase, [
       ...(products.data ?? []).map((p) => p.main_image),
       ...(brands.data ?? []).map((b) => b.logo_url),
