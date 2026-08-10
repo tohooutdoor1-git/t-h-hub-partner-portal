@@ -90,16 +90,23 @@ export function ProductDialog({
                   ))}
                 </div>
               )}
-              {product["video_url"] && (
-                <a
-                  href={String(product["video_url"])}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary"
-                >
-                  <PlayCircle className="h-4 w-4" /> Ver video del producto
-                </a>
-              )}
+              {product["video_url"] &&
+                (/youtube|youtu\.be|vimeo/i.test(String(product["video_url"])) ? (
+                  <a
+                    href={String(product["video_url"])}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+                  >
+                    <PlayCircle className="h-4 w-4" /> Ver video del producto
+                  </a>
+                ) : (
+                  <video
+                    src={String(product["video_url"])}
+                    controls
+                    className="w-full rounded-xl border border-border"
+                  />
+                ))}
             </div>
 
             <div className="space-y-4">
