@@ -108,7 +108,11 @@ export function GalleryEditor({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              if (dragIndex !== null) move(dragIndex, i);
+              if (e.dataTransfer.files?.length) {
+                void handleFiles(e.dataTransfer.files);
+              } else if (dragIndex !== null) {
+                move(dragIndex, i);
+              }
               setDragIndex(null);
             }}
             className={`group relative aspect-square overflow-hidden rounded-xl border ${
