@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowUpRight, ShieldCheck, TrendingUp } from "lucide-react";
 import { HubShell } from "@/components/hub/HubShell";
 import { LevelBadge, StatusBadge, quoteTone, orderTone } from "@/components/hub/Badges";
+import { LevelTrack } from "@/components/hub/LevelTrack";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/hooks/useMe";
 import { getDistributorDashboard, bootstrapAdmin } from "@/lib/hub.functions";
