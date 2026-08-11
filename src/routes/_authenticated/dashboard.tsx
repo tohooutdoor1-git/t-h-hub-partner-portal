@@ -136,11 +136,15 @@ function Dashboard() {
       right={dist ? <LevelBadge code={dist.level_code} /> : undefined}
     >
       {dist && (
-        <div className="grid gap-5 lg:grid-cols-3">
+        <LevelTrack levels={levels} currentCode={dist.level_code} accumulated={accumulated} />
+      )}
+
+      {dist && (
+        <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="hub-card relative overflow-hidden p-6 lg:col-span-2">
             <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary-soft blur-2xl" />
             <div className="relative">
-              <p className="hub-eyebrow">Progreso de nivel</p>
+              <p className="hub-eyebrow">Siguiente meta</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <span className="font-display text-2xl font-semibold">
                   {current?.name ?? "Bronze"}
@@ -159,12 +163,6 @@ function Dashboard() {
                   ? `Te faltan ${money(missing)} para alcanzar ${next.name}`
                   : "Has alcanzado el nivel más alto del programa."}
               </p>
-              <div className="mt-5 h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-[width] duration-700 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
               <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                 <span>Acumulado {money(accumulated)}</span>
                 <span>{progress}%</span>
@@ -172,6 +170,7 @@ function Dashboard() {
               </div>
             </div>
           </div>
+
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
             <StatCard
