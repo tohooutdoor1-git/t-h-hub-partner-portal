@@ -40,25 +40,46 @@ export function GalleryEditor({
   min?: number;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropActive, setDropActive] = useState(false);
   const [urlValue, setUrlValue] = useState("");
 
-  async function handleFiles(files: FileList) {
+  async function handleFiles(files: FileList | File[]) {
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return;
     setUploading(true);
-    const next: MediaItem[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        next.push(await uploadMedia(file, "products"));
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
+    setProgress({ done: 0, total: list.length });
+
+    // Subida en paralelo (lotes de 4) para cargar varias imágenes de golpe.
+    const results: MediaItem[] = [];
+    const failed: string[] = [];
+    const BATCH = 4;
+    for (let i = 0; i < list.length; i += BATCH) {
+      const batch = list.slice(i, i + BATCH);
+      const settled = await Promise.all(
+        batch.map(async (file) => {
+          try {
+            return await uploadMedia(file, "products");
+          } catch (e) {
+            failed.push(`${file.name}: ${(e as Error).message}`);
+            return null;
+          }
+        }),
+      );
+      settled.forEach((r) => r && results.push(r));
+      setProgress((p) => ({ ...p, done: Math.min(p.total, i + batch.length) }));
     }
-    if (next.length) {
-      onChange([...items, ...next]);
-      toast.success(`${next.length} imagen(es) cargada(s)`);
+
+    if (results.length) {
+      onChange([...items, ...results]);
+      toast.success(`${results.length} imagen(es) cargada(s)`);
     }
+    if (failed.length) toast.error(`No se pudieron subir ${failed.length}: ${failed[0]}`);
     setUploading(false);
+    setProgress({ done: 0, total: 0 });
   }
+
 
   function move(from: number, to: number) {
     if (from === to || to < 0 || to >= items.length) return;
