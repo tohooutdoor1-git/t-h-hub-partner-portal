@@ -96,9 +96,7 @@ export function LevelTrack({
                 >
                   <Icon className="h-4 w-4" />
                 </div>
-                <div className="mt-2 -translate-x-1/2 whitespace-nowrap text-center text-[11px] leading-tight"
-                  style={{ marginLeft: "50%" }}
-                >
+                <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap text-center text-[11px] leading-tight">
                   <p className={reached ? "font-semibold text-foreground" : "text-muted-foreground"}>
                     {lvl.name}
                   </p>
