@@ -193,7 +193,52 @@ async function quoteParties(admin: DB, quoteId: string) {
   return { quote: data as any, adminIds: (admins ?? []).map((a: { user_id: string }) => a.user_id) };
 }
 
+/**
+ * Asigna automáticamente un ejecutivo al distribuidor (y a la cotización)
+ * cuando aún no tiene uno: elige el vendedor activo con menos distribuidores.
+ */
+export async function autoAssignSeller(admin: DB, quoteId: string) {
+  const { data: quote } = await admin
+    .from("quotes")
+    .select("id, seller_id, distributor_id")
+    .eq("id", quoteId)
+    .maybeSingle();
+  if (!quote) return null;
+
+  if (quote.seller_id) return quote.seller_id as string;
+
+  const { data: dist } = await admin
+    .from("distributors")
+    .select("id, seller_id")
+    .eq("id", quote.distributor_id)
+    .maybeSingle();
+
+  let sellerId: string | null = (dist?.seller_id as string | null) ?? null;
+
+  if (!sellerId) {
+    const { data: sellers } = await admin
+      .from("sellers")
+      .select("id")
+      .eq("active", true)
+      .order("created_at");
+    if (!sellers?.length) return null;
+    const { data: loads } = await admin.from("distributors").select("seller_id");
+    const count = new Map<string, number>();
+    (loads ?? []).forEach((d: { seller_id: string | null }) => {
+      if (d.seller_id) count.set(d.seller_id, (count.get(d.seller_id) ?? 0) + 1);
+    });
+    sellerId = sellers
+      .map((s: { id: string }) => s.id)
+      .sort((a, b) => (count.get(a) ?? 0) - (count.get(b) ?? 0))[0] as string;
+    await admin.from("distributors").update({ seller_id: sellerId }).eq("id", quote.distributor_id);
+  }
+
+  await admin.from("quotes").update({ seller_id: sellerId }).eq("id", quoteId);
+  return sellerId;
+}
+
 export async function notifyQuoteSubmitted(admin: DB, quoteId: string) {
+  await autoAssignSeller(admin, quoteId);
   const { quote, adminIds } = await quoteParties(admin, quoteId);
   if (!quote) return { sent: false, reason: "not_found" as const };
   const title = `Nueva cotización ${quote.folio}`;
