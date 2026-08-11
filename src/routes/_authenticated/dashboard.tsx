@@ -128,6 +128,7 @@ function Dashboard() {
   return (
     <HubShell
       isAdmin={isAdmin}
+      isSeller={me?.roles.includes("seller") ?? false}
       title={`Bienvenido, ${dist?.contact_name?.split(" ")[0] ?? "equipo TÖHÖ"}`}
       subtitle={
         dist
