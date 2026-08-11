@@ -149,9 +149,11 @@ export function GalleryEditor({
           </div>
         ))}
 
-        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-input text-xs text-muted-foreground hover:border-primary hover:text-primary">
+        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-input px-1 text-center text-xs text-muted-foreground hover:border-primary hover:text-primary">
           <Upload className="h-4 w-4" />
-          {uploading ? "Subiendo…" : "Subir"}
+          {uploading
+            ? `Subiendo ${progress.done}/${progress.total}`
+            : "Subir varias"}
           <input
             type="file"
             accept="image/*"
@@ -164,6 +166,46 @@ export function GalleryEditor({
           />
         </label>
       </div>
+
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropActive(true);
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropActive(false);
+          if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center text-xs transition-colors ${
+          dropActive
+            ? "border-primary bg-primary/5 text-primary"
+            : "border-input text-muted-foreground hover:border-primary"
+        }`}
+      >
+        <Upload className="h-5 w-5" />
+        {uploading ? (
+          <span>
+            Subiendo {progress.done} de {progress.total}…
+          </span>
+        ) : (
+          <span>
+            Arrastra aquí varias imágenes o haz clic para seleccionarlas todas de golpe
+          </span>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.length) void handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </label>
+
 
       <div className="flex gap-2">
         <Input
