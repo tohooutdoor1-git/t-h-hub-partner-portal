@@ -11,6 +11,8 @@ import { useMe } from "@/hooks/useMe";
 import { getQuote, listMyQuotes } from "@/lib/quotes.functions";
 import { money2, shortDate } from "@/lib/format";
 import { QUOTE_STATUS_LABEL } from "@/lib/pricing";
+import { downloadQuotePdf } from "@/lib/quote-pdf";
+import { FileDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cotizaciones")({
   head: () => ({
@@ -38,6 +40,7 @@ function CotizacionesPage() {
   return (
     <HubShell
       isAdmin={me?.roles.includes("admin") ?? false}
+      isSeller={me?.roles.includes("seller") ?? false}
       title="Cotizaciones"
       subtitle="Historial y seguimiento de tus solicitudes"
     >
@@ -119,6 +122,15 @@ function QuoteDetailDialog({ id, onClose }: { id: string | null; onClose: () => 
               <span className="text-muted-foreground">
                 {shortDate(quote["submitted_at"] ?? quote["created_at"])}
               </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-auto"
+                onClick={() => downloadQuotePdf(quote)}
+              >
+                <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
+              </Button>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-border">

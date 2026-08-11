@@ -6,6 +6,9 @@ import { StatusBadge, orderTone, quoteTone } from "@/components/hub/Badges";
 import { staffListQuotes, staffSetOrderStatus, staffSetQuoteStatus } from "@/lib/quotes.functions";
 import { money2, shortDate } from "@/lib/format";
 import { ORDER_STATUS_LABEL, QUOTE_STATUS_LABEL } from "@/lib/pricing";
+import { downloadQuotePdf } from "@/lib/quote-pdf";
+import { Button } from "@/components/ui/button";
+import { FileDown } from "lucide-react";
 
 type Row = Record<string, any>;
 
@@ -76,6 +79,14 @@ export function StaffQuotesTab() {
                   label={QUOTE_STATUS_LABEL[String(q["status"])] ?? String(q["status"])}
                   tone={quoteTone(String(q["status"]))}
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadQuotePdf(q)}
+                >
+                  <FileDown className="mr-1 h-4 w-4" /> PDF
+                </Button>
                 <select
                   value={String(q["status"])}
                   onChange={(e) => setQuote.mutate({ id: String(q["id"]), status: e.target.value })}

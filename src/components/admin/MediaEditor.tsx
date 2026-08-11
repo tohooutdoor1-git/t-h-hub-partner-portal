@@ -40,25 +40,46 @@ export function GalleryEditor({
   min?: number;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropActive, setDropActive] = useState(false);
   const [urlValue, setUrlValue] = useState("");
 
-  async function handleFiles(files: FileList) {
+  async function handleFiles(files: FileList | File[]) {
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return;
     setUploading(true);
-    const next: MediaItem[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        next.push(await uploadMedia(file, "products"));
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
+    setProgress({ done: 0, total: list.length });
+
+    // Subida en paralelo (lotes de 4) para cargar varias imágenes de golpe.
+    const results: MediaItem[] = [];
+    const failed: string[] = [];
+    const BATCH = 4;
+    for (let i = 0; i < list.length; i += BATCH) {
+      const batch = list.slice(i, i + BATCH);
+      const settled = await Promise.all(
+        batch.map(async (file) => {
+          try {
+            return await uploadMedia(file, "products");
+          } catch (e) {
+            failed.push(`${file.name}: ${(e as Error).message}`);
+            return null;
+          }
+        }),
+      );
+      settled.forEach((r) => r && results.push(r));
+      setProgress((p) => ({ ...p, done: Math.min(p.total, i + batch.length) }));
     }
-    if (next.length) {
-      onChange([...items, ...next]);
-      toast.success(`${next.length} imagen(es) cargada(s)`);
+
+    if (results.length) {
+      onChange([...items, ...results]);
+      toast.success(`${results.length} imagen(es) cargada(s)`);
     }
+    if (failed.length) toast.error(`No se pudieron subir ${failed.length}: ${failed[0]}`);
     setUploading(false);
+    setProgress({ done: 0, total: 0 });
   }
+
 
   function move(from: number, to: number) {
     if (from === to || to < 0 || to >= items.length) return;
@@ -87,7 +108,11 @@ export function GalleryEditor({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              if (dragIndex !== null) move(dragIndex, i);
+              if (e.dataTransfer.files?.length) {
+                void handleFiles(e.dataTransfer.files);
+              } else if (dragIndex !== null) {
+                move(dragIndex, i);
+              }
               setDragIndex(null);
             }}
             className={`group relative aspect-square overflow-hidden rounded-xl border ${
@@ -128,9 +153,11 @@ export function GalleryEditor({
           </div>
         ))}
 
-        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-input text-xs text-muted-foreground hover:border-primary hover:text-primary">
+        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-input px-1 text-center text-xs text-muted-foreground hover:border-primary hover:text-primary">
           <Upload className="h-4 w-4" />
-          {uploading ? "Subiendo…" : "Subir"}
+          {uploading
+            ? `Subiendo ${progress.done}/${progress.total}`
+            : "Subir varias"}
           <input
             type="file"
             accept="image/*"
@@ -143,6 +170,46 @@ export function GalleryEditor({
           />
         </label>
       </div>
+
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropActive(true);
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropActive(false);
+          if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center text-xs transition-colors ${
+          dropActive
+            ? "border-primary bg-primary/5 text-primary"
+            : "border-input text-muted-foreground hover:border-primary"
+        }`}
+      >
+        <Upload className="h-5 w-5" />
+        {uploading ? (
+          <span>
+            Subiendo {progress.done} de {progress.total}…
+          </span>
+        ) : (
+          <span>
+            Arrastra aquí varias imágenes o haz clic para seleccionarlas todas de golpe
+          </span>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.length) void handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </label>
+
 
       <div className="flex gap-2">
         <Input
