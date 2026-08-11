@@ -9,6 +9,7 @@ import {
   FolderOpen,
   User,
   ShieldCheck,
+  Briefcase,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -47,7 +48,15 @@ export function HubLogo({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function NavList({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () => void }) {
+function NavList({
+  isAdmin,
+  isSeller,
+  onNavigate,
+}: {
+  isAdmin: boolean;
+  isSeller?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1">
@@ -70,9 +79,23 @@ function NavList({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () =>
           </Link>
         );
       })}
-      {isAdmin && (
+      {(isAdmin || isSeller) && (
         <>
           <p className="hub-eyebrow mt-6 px-3">TÖHÖ interno</p>
+          <Link
+            to="/ventas"
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              pathname.startsWith("/ventas")
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <Briefcase className="h-4 w-4" />
+            Panel de ventas
+          </Link>
+          {isAdmin && (
           <Link
             to="/admin"
             onClick={onNavigate}
@@ -86,6 +109,7 @@ function NavList({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () =>
             <ShieldCheck className="h-4 w-4" />
             Panel administrativo
           </Link>
+          )}
         </>
       )}
     </nav>
@@ -95,12 +119,14 @@ function NavList({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () =>
 export function HubShell({
   children,
   isAdmin = false,
+  isSeller = false,
   title,
   subtitle,
   right,
 }: {
   children: ReactNode;
   isAdmin?: boolean;
+  isSeller?: boolean;
   title: string;
   subtitle?: string;
   right?: ReactNode;
@@ -120,7 +146,7 @@ export function HubShell({
           <HubLogo />
         </div>
         <div className="mt-8 flex-1 overflow-y-auto">
-          <NavList isAdmin={isAdmin} />
+          <NavList isAdmin={isAdmin} isSeller={isSeller} />
         </div>
         <button
           onClick={signOut}
@@ -140,7 +166,7 @@ export function HubShell({
             <SheetContent side="left" className="w-72 bg-sidebar p-5">
               <HubLogo />
               <div className="mt-8">
-                <NavList isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
+                <NavList isAdmin={isAdmin} isSeller={isSeller} onNavigate={() => setOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>
