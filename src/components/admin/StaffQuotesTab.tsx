@@ -103,13 +103,8 @@ export function StaffQuotesTab() {
                 </select>
               </div>
             </header>
-            <ul className="text-xs text-muted-foreground">
-              {((q["items"] ?? []) as Row[]).map((i) => (
-                <li key={String(i["id"])}>
-                  {Number(i["quantity"])} × {String(i["name"])} — {money2(i["unit_price"])}
-                </li>
-              ))}
-            </ul>
+            <QuoteItemsEditor quote={q} />
+
           </article>
         ))}
         {quotes.length === 0 && (
