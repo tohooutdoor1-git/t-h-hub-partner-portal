@@ -12,7 +12,8 @@ import { getQuote, listMyQuotes } from "@/lib/quotes.functions";
 import { money2, shortDate } from "@/lib/format";
 import { QUOTE_STATUS_LABEL } from "@/lib/pricing";
 import { downloadQuotePdf } from "@/lib/quote-pdf";
-import { FileDown } from "lucide-react";
+import { FileDown, MessageCircle } from "lucide-react";
+import { waLink } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/_authenticated/cotizaciones")({
   head: () => ({
@@ -131,6 +132,20 @@ function QuoteDetailDialog({ id, onClose }: { id: string | null; onClose: () => 
               >
                 <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
               </Button>
+              {quote["seller"]?.whatsapp && (
+                <Button asChild type="button" variant="outline" size="sm">
+                  <a
+                    href={waLink(
+                      String(quote["seller"].whatsapp),
+                      `Hola ${quote["seller"].name ?? ""}, te comparto mi cotización ${String(quote["folio"])} de TÖHÖ HUB.`,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
+                  </a>
+                </Button>
+              )}
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-border">
