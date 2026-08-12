@@ -296,3 +296,50 @@ export const staffSetOrderStatus = createServerFn({ method: "POST" })
     const email = await notifyOrderStatus(supabaseAdmin, data.id, data.status);
     return { ok: true, email };
   });
+
+/** Ajuste de partidas por el vendedor: cantidades, precios y eliminación. */
+export const staffUpdateQuoteItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        id: uuid,
+        items: z.array(
+          z.object({
+            id: uuid,
+            quantity: z.number().int().min(1),
+            unit_price: z.number().min(0),
+            remove: z.boolean().optional(),
+          }),
+        ),
+        internal_notes: z.string().max(1000).optional().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { assertStaff, recalcQuote } = await import("@/lib/quotes.server");
+    await assertStaff(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    for (const item of data.items) {
+      if (item.remove) {
+        const { error } = await supabaseAdmin.from("quote_items").delete().eq("id", item.id);
+        if (error) throw new Error(error.message);
+        continue;
+      }
+      const { error } = await supabaseAdmin
+        .from("quote_items")
+        .update({ quantity: item.quantity, unit_price: item.unit_price })
+        .eq("id", item.id);
+      if (error) throw new Error(error.message);
+    }
+    await recalcQuote(supabaseAdmin, data.id);
+    if (data.internal_notes !== undefined) {
+      const { error } = await supabaseAdmin
+        .from("quotes")
+        .update({ internal_notes: data.internal_notes })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });

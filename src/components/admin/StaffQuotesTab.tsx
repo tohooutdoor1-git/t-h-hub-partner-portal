@@ -8,7 +8,9 @@ import { money2, shortDate } from "@/lib/format";
 import { ORDER_STATUS_LABEL, QUOTE_STATUS_LABEL } from "@/lib/pricing";
 import { downloadQuotePdf } from "@/lib/quote-pdf";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
+import { FileDown, MessageCircle } from "lucide-react";
+import { QuoteItemsEditor } from "@/components/admin/QuoteItemsEditor";
+import { waLink } from "@/lib/whatsapp";
 
 type Row = Record<string, any>;
 
@@ -87,6 +89,20 @@ export function StaffQuotesTab() {
                 >
                   <FileDown className="mr-1 h-4 w-4" /> PDF
                 </Button>
+                {q["distributor"]?.phone && (
+                  <Button asChild type="button" variant="outline" size="sm">
+                    <a
+                      href={waLink(
+                        String(q["distributor"].phone),
+                        `Hola ${q["distributor"].contact_name ?? ""}, te escribo de TÖHÖ sobre tu cotización ${String(q["folio"])} por ${money2(q["total"])}.`,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
+                    </a>
+                  </Button>
+                )}
                 <select
                   value={String(q["status"])}
                   onChange={(e) => setQuote.mutate({ id: String(q["id"]), status: e.target.value })}
@@ -103,13 +119,8 @@ export function StaffQuotesTab() {
                 </select>
               </div>
             </header>
-            <ul className="text-xs text-muted-foreground">
-              {((q["items"] ?? []) as Row[]).map((i) => (
-                <li key={String(i["id"])}>
-                  {Number(i["quantity"])} × {String(i["name"])} — {money2(i["unit_price"])}
-                </li>
-              ))}
-            </ul>
+            <QuoteItemsEditor quote={q} />
+
           </article>
         ))}
         {quotes.length === 0 && (
